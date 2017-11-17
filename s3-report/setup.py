@@ -35,8 +35,7 @@ tests_require = [
     'pytest==3.1.3',
     'moto==1.1.24',
     'coveralls==1.1',
-    'factory-boy==2.9.2',
-    'tox==2.9.1'
+    'factory-boy==2.9.2'
 ]
 
 setup(

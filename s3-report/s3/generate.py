@@ -12,7 +12,7 @@ from raven_python_lambda import RavenLambdaWrapper
 from historical.s3.models import CurrentS3Model
 
 from s3.models import S3ReportSchema
-from s3.util import dump_to_s3
+from s3.util import dump_to_s3, set_config_from_input
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
@@ -48,4 +48,6 @@ def handler(event, context):
     should occur via changes to the durable table (to respond to CRUDs).
 
     """
+    set_config_from_input(event)
+
     dump_report()

@@ -13,7 +13,7 @@ from s3.generate import dump_report
 from historical.s3.models import CurrentS3Model
 from s3.models import S3ReportSchema
 from s3.update import process_dynamodb_record, update_records
-from s3.util import dump_to_s3
+from s3.util import dump_to_s3, set_config_from_input
 
 
 def test_historical_table_fixture(historical_table):
@@ -269,3 +269,29 @@ def test_update_records_sans_existing(historical_table, dump_buckets, bucket_eve
     CONFIG.dump_to_buckets = old_dump_to_buckets
     CONFIG.import_bucket = old_import_bucket
     CONFIG.export_if_missing = old_export_if_missing
+
+
+def test_configuration_update():
+    # Just test that a handful are working:
+    old_import_prefix = CONFIG.import_prefix
+    old_current_region = CONFIG.current_region
+    old_exclude_fields = CONFIG.exclude_fields
+
+    lambda_config = {
+        "config": {
+            "import_prefix": "some-prefix",
+            "exclude_fields": ["all", "of", "them"],
+            "current_region": "us-west-2"
+        }
+    }
+
+    set_config_from_input(lambda_config)
+
+    assert CONFIG.import_prefix == "some-prefix"
+    assert CONFIG.current_region == "us-west-2"
+    assert CONFIG.exclude_fields == ["all", "of", "them"]
+
+    # Clean-up:
+    CONFIG.import_prefix = old_import_prefix
+    CONFIG.current_region = old_current_region
+    CONFIG.exclude_fields = old_exclude_fields

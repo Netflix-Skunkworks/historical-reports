@@ -20,7 +20,7 @@ class Config:
     ```
     """
     def __init__(self):
-        self._s3_reports_version = 1
+        self._s3_reports_version = 1    # Read-only -- this will update as the code changes.
         self._current_region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
         self._exclude_fields = os.environ.get("EXCLUDE_FIELDS", "Name,_version").split(",")
         self._dump_to_buckets = os.environ.get("DUMP_TO_BUCKETS", "").split(",")
