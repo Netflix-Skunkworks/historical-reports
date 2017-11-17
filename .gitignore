@@ -171,9 +171,6 @@ venv
 .requirements
 
 *.test.yml
-serverless.yml
-serverless_configs/*
-
 
 ### VisualStudioCode ###
 .vscode

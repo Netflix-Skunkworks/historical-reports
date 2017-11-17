@@ -8,10 +8,7 @@ Consumer of Historical's S3 tracking -- dumps a JSON of all buckets in an accoun
 import sys
 import os.path
 
-import subprocess
-from distutils import log
 from setuptools import setup, find_packages
-from setuptools.command.install import install
 
 
 ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__)))

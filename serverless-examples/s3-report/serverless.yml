@@ -1,0 +1,62 @@
+service: "historical-reports-s3"
+
+provider:
+  name: aws
+  runtime: python3.6
+  memorySize: 512
+  timeout: 300
+  deploymentBucket:
+    name: YOUR-DEPLOYMENT-BUCKET-HERE
+
+custom: ${file(serverless_configs/${opt:stage}.yml)}
+
+functions:
+  Generator:
+    handler: s3.generate.handler
+    description: Scheduled event that generates the full historical s3 report.
+    tags:
+      owner: YOUREMAILHERE@YOURCOMPANYHERE.COM
+    role: arn:aws:iam::${self:custom.accountId}:role/<IAM-ROLE-TO-RUN-THE-HISTORICAL-S3-LAMBDA-REPORT>
+    environment:
+      SENTRY_DSN: <SENTRY-DSN HERE IF YOU WANT TO USE IT>
+      DUMP_TO_BUCKETS: ${self:custom.dumpBuckets}
+      EXCLUDE_FIELDS: ${self:custom.excludeFields}
+
+resources:
+  Resources:
+    # Lambdas
+    GeneratorScheduledRule:
+      Type: AWS::Events::Rule
+      Properties:
+        Description: ScheduledRule
+        ScheduleExpression: rate(6 hours)
+        State: ENABLED
+        Targets:
+          -
+            Arn:
+              Fn::GetAtt:
+                - GeneratorLambdaFunction
+                - Arn
+            Id: TargetFunctionV1
+
+    PermissionForEventsToInvokeLambda:
+      Type: AWS::Lambda::Permission
+      Properties:
+        FunctionName:
+          Ref: GeneratorLambdaFunction
+        Action: lambda:InvokeFunction
+        Principal: events.amazonaws.com
+        SourceArn:
+          Fn::GetAtt:
+            - GeneratorLambdaFunction
+            - Arn
+
+    # Log group -- 1 for each function...
+    GeneratorLogGroup:
+      Properties:
+        RetentionInDays: "3"
+
+
+plugins:
+  - serverless-python-requirements
+  - serverless-prune-plugin
