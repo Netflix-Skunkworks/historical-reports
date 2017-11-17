@@ -15,7 +15,7 @@ from raven_python_lambda import RavenLambdaWrapper
 from s3.generate import dump_report
 
 from s3.models import S3ReportSchema
-from s3.util import fetch_from_s3, dump_to_s3
+from s3.util import fetch_from_s3, dump_to_s3, set_config_from_input
 from s3.config import CONFIG
 
 logging.basicConfig()
@@ -105,4 +105,6 @@ def handler(event, context):
     should occur via changes to the durable table (to respond to CRUDs).
 
     """
+    set_config_from_input(event)
+
     update_records(event["Records"])

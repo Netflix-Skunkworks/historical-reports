@@ -58,3 +58,22 @@ def fetch_from_s3():
     """
     client = boto3.client("s3")
     return _get_from_s3(client, CONFIG.import_bucket, CONFIG.import_prefix)
+
+
+def set_config_from_input(lambda_input):
+    """
+    Sets the attributes on the configuration based on the input to the lambda function.
+
+    These need to be set to the raw values that the configuration needs. For example, if the env var
+    would take in a comma-separated-list, you would supply an actual list of the items, not the comma-separated-string.
+
+    TODO: Make this a decorator.
+    :param lambda_input:
+    :return:
+    """
+    if lambda_input.get("config"):
+        for attribute, value in lambda_input["config"].items():
+            if hasattr(CONFIG, attribute):
+                setattr(CONFIG, attribute, value)
+            else:
+                log.error("Config Attribute: {} is not valid.".format(attribute))
