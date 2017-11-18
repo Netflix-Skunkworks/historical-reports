@@ -11,12 +11,20 @@ provider:
 custom: ${file(serverless_configs/${opt:stage}.yml)}
 
 functions:
-  Generator:
+  FullReport:
     handler: s3.generate.handler
     description: Scheduled event that generates the full historical s3 report.
     tags:
       owner: YOUREMAILHERE@YOURCOMPANYHERE.COM
     role: arn:aws:iam::${self:custom.accountId}:role/<IAM-ROLE-TO-RUN-THE-HISTORICAL-S3-LAMBDA-REPORT>
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt:
+              - HistoricalS3CurrentTable
+              - StreamArn
+
     environment:
       SENTRY_DSN: <SENTRY-DSN HERE IF YOU WANT TO USE IT>
       DUMP_TO_BUCKETS: ${self:custom.dumpBuckets}
@@ -24,35 +32,33 @@ functions:
 
 resources:
   Resources:
-    # Lambdas
-    GeneratorScheduledRule:
+    FullReportScheduledRule:
       Type: AWS::Events::Rule
       Properties:
-        Description: ScheduledRule
-        ScheduleExpression: rate(6 hours)
+        Description: ScheduledRule for the full report (sans Policy)
+        ScheduleExpression: rate(3 hours)
         State: ENABLED
         Targets:
           -
             Arn:
               Fn::GetAtt:
-                - GeneratorLambdaFunction
+                - FullReportLambdaFunction
                 - Arn
             Id: TargetFunctionV1
 
-    PermissionForEventsToInvokeLambda:
+    PermissionForFullReportEventsToInvokeLambda:
       Type: AWS::Lambda::Permission
       Properties:
         FunctionName:
-          Ref: GeneratorLambdaFunction
+          Ref: FullReportLambdaFunction
         Action: lambda:InvokeFunction
         Principal: events.amazonaws.com
         SourceArn:
           Fn::GetAtt:
-            - GeneratorLambdaFunction
+            - FullReportScheduledRule
             - Arn
 
-    # Log group -- 1 for each function...
-    GeneratorLogGroup:
+    FullReportLogGroup:
       Properties:
         RetentionInDays: "3"
 

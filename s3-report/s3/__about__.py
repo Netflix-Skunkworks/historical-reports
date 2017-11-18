@@ -9,7 +9,7 @@ __title__ = "historical_reports_s3"
 __summary__ = "Historical function for generating full dictionary of all S3 buckets and corresponding metadata."
 __uri__ = "https://github.com/Netflix-Skunkworks/historical-reports"
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __author__ = "The Historical developers"
 __email__ = "security@netflix.com"

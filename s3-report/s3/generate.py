@@ -8,11 +8,10 @@
 import json
 import logging
 
-from raven_python_lambda import RavenLambdaWrapper
 from historical.s3.models import CurrentS3Model
 
 from s3.models import S3ReportSchema
-from s3.util import dump_to_s3, set_config_from_input
+from s3.util import dump_to_s3
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
@@ -36,18 +35,3 @@ def dump_report(commit=True):
         log.debug("Commit flag not set, not saving.")
 
     log.debug("Completed S3 report generation.")
-
-
-@RavenLambdaWrapper()
-def handler(event, context):
-    """
-    Historical S3 report generator. This will take a full dump of the Current S3 Historical table and generate
-    a JSON with all of the data within it to the model.
-
-    This generates the initial file. This need not be called often. Subsequent modifications to the generated JSON
-    should occur via changes to the durable table (to respond to CRUDs).
-
-    """
-    set_config_from_input(event)
-
-    dump_report()
