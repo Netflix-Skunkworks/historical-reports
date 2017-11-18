@@ -18,8 +18,7 @@ The following reports are available:
 
 # Report Functions
 
-## S3
-[![PyPI version](https://badge.fury.io/py/historical-reports-s3.svg)](https://badge.fury.io/py/historical-reports-s3)
+## S3 [![PyPI version](https://badge.fury.io/py/historical-reports-s3.svg)](https://badge.fury.io/py/historical-reports-s3)
 This is similar in nature to [SWAG](https://github.com/Netflix-Skunkworks/swag-client), this generates a global dictionary 
 of all S3 buckets you have in your account, along with metadata about them. 
 This report gets generated into JSON and stored into an S3 bucket(s) of your choosing. The primary
