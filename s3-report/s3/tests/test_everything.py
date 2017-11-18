@@ -8,12 +8,18 @@
 import json
 
 import pytest
+from s3.entrypoints import handler
 from s3.config import CONFIG
 from s3.generate import dump_report
 from historical.s3.models import CurrentS3Model
 from s3.models import S3ReportSchema
 from s3.update import process_dynamodb_record, update_records
 from s3.util import dump_to_s3, set_config_from_input
+
+
+class MockContext:
+    def get_remaining_time_in_millis(self):
+        return 9000
 
 
 def test_historical_table_fixture(historical_table):
@@ -89,11 +95,15 @@ def test_dump_to_s3(dump_buckets, generated_file):
     CONFIG.dump_to_buckets = old_value
 
 
-def test_dump_report(dump_buckets, historical_table):
+@pytest.mark.parametrize("lambda_entry", [False, True])
+def test_dump_report(dump_buckets, historical_table, lambda_entry):
     old_value = CONFIG.dump_to_buckets
     CONFIG.dump_to_buckets = ["dump{}".format(x) for x in range(0, 10)]
 
-    dump_report()
+    if lambda_entry:
+        handler({}, MockContext())
+    else:
+        dump_report()
 
     # Verify all the info:
     for bucket in CONFIG.dump_to_buckets:
@@ -212,7 +222,9 @@ def test_lite_bucket_schema_for_events(historical_table, bucket_event):
     CONFIG.exclude_fields = old_fields
 
 
-def test_update_records(existing_s3_report, historical_table, bucket_event, delete_bucket_event, dump_buckets):
+@pytest.mark.parametrize("lambda_entry", [False, True])
+def test_update_records(existing_s3_report, historical_table, bucket_event, delete_bucket_event, dump_buckets,
+                        lambda_entry):
     old_dump_to_buckets = CONFIG.dump_to_buckets
     old_import_bucket = CONFIG.import_bucket
 
@@ -220,7 +232,10 @@ def test_update_records(existing_s3_report, historical_table, bucket_event, dele
     CONFIG.dump_to_buckets = ["dump0"]
 
     # Add a bucket:
-    update_records(bucket_event["Records"])
+    if lambda_entry:
+        handler(bucket_event, MockContext())
+    else:
+        update_records(bucket_event["Records"])
 
     new_report = json.loads(
         dump_buckets.get_object(Bucket="dump0", Key="historical-s3-report.json")["Body"].read().decode("utf-8")
@@ -232,7 +247,11 @@ def test_update_records(existing_s3_report, historical_table, bucket_event, dele
     assert new_report["buckets"]["testbucketNEWBUCKET"]
 
     # Delete a bucket:
-    update_records(delete_bucket_event["Records"])
+    if lambda_entry:
+        handler(delete_bucket_event, MockContext())
+    else:
+        update_records(delete_bucket_event["Records"])
+
     delete_report = json.loads(
         dump_buckets.get_object(Bucket="dump0", Key="historical-s3-report.json")["Body"].read().decode("utf-8")
     )
@@ -252,7 +271,6 @@ def test_update_records_sans_existing(historical_table, dump_buckets, bucket_eve
     # First test that the object is missing, and we aren't going to perform a full report dump:
     CONFIG.import_bucket = "dump0"
     CONFIG.export_if_missing = False
-
     update_records(bucket_event["Records"])
     assert not dump_buckets.list_objects_v2(Bucket="dump0")["KeyCount"]
 

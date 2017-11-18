@@ -11,11 +11,10 @@ import logging
 from historical.attributes import decimal_default
 from historical.common.dynamodb import deserialize_current_dynamo_to_pynamo
 from historical.s3.models import CurrentS3Model
-from raven_python_lambda import RavenLambdaWrapper
 from s3.generate import dump_report
 
 from s3.models import S3ReportSchema
-from s3.util import fetch_from_s3, dump_to_s3, set_config_from_input
+from s3.util import fetch_from_s3, dump_to_s3
 from s3.config import CONFIG
 
 logging.basicConfig()
@@ -93,18 +92,3 @@ def update_records(records, commit=True):
         log.debug("Commit flag not set, not saving.")
 
     log.debug("Completed S3 report update.")
-
-
-@RavenLambdaWrapper()
-def handler(event, context):
-    """
-    Historical S3 report updater. This will update the existing Historical S3 report based on changes that have
-    occurred, and update the JSON stored in S3.
-
-    This generates the initial file. This need not be called often. Subsequent modifications to the generated JSON
-    should occur via changes to the durable table (to respond to CRUDs).
-
-    """
-    set_config_from_input(event)
-
-    update_records(event["Records"])
