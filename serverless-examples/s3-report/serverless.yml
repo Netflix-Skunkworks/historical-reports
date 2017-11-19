@@ -21,7 +21,7 @@ functions:
       - stream:
           type: dynamodb
           arn:
-            Fn::ImportValue: HistoricalS3CurrentTableStreamArn
+            Fn::ImportValue: HistoricalS3DurableTableStreamArn
           startingPosition: LATEST
     environment:
       SENTRY_DSN: <SENTRY-DSN HERE IF YOU WANT TO USE IT>
