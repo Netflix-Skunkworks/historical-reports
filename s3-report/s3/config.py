@@ -16,7 +16,7 @@ class Config:
 
     Simply import this and use it:
     ```
-    from s3.models import CONFIG
+    from s3.config import CONFIG
     ```
     """
     def __init__(self):

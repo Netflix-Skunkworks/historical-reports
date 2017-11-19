@@ -21,13 +21,12 @@ functions:
       - stream:
           type: dynamodb
           arn:
-            Fn::GetAtt:
-              - HistoricalS3CurrentTable
-              - StreamArn
-
+            Fn::ImportValue: HistoricalS3CurrentTableStreamArn
+          startingPosition: LATEST
     environment:
       SENTRY_DSN: <SENTRY-DSN HERE IF YOU WANT TO USE IT>
       DUMP_TO_BUCKETS: ${self:custom.dumpBuckets}
+      IMPORT_BUCKET: ${self:custom.importBucket}
       EXCLUDE_FIELDS: ${self:custom.excludeFields}
 
 resources:
