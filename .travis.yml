@@ -6,4 +6,4 @@ install:
   - pip install tox-travis coveralls
 
 script:
-  - tox -e s3
+  - tox -e reports
