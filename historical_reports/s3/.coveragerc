@@ -1,0 +1,3 @@
+[report]
+include = s3/*.py
+omit = s3/__about__.py

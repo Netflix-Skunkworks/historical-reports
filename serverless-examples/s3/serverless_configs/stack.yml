@@ -1,0 +1,10 @@
+accountId: YOURACCOUNTIDHERE
+accountName: YOURACCOUNTHERE
+dumpBuckets: S3-BUCKET-TO-DUMP-TO-HERE
+importBucket: S3-BUCKET-TO-IMPORT-FROM-HERE
+excludeFields: Name,_version,Policy (OR ADD MORE HERE)
+pythonRequirements:
+    dockerizePip: true
+prune:
+  automatic: true
+  number: 3
