@@ -1,5 +1,5 @@
 """
-.. module: s3.util
+.. module: historical_reports.s3.util
     :platform: Unix
     :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
@@ -9,7 +9,7 @@ import boto3
 from botocore.exceptions import ClientError
 from retrying import retry
 
-from s3.config import CONFIG
+from .config import CONFIG
 
 import logging
 

@@ -1,5 +1,5 @@
 """
-.. module: s3.cli
+.. module: historical_reports.s3.cli
     :platform: Unix
     :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
@@ -9,8 +9,8 @@ import logging
 
 import click
 
-from s3.config import CONFIG
-from s3.generate import dump_report
+from .config import CONFIG
+from .generate import dump_report
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')

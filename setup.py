@@ -1,8 +1,8 @@
 """
-Historical Functions - S3
-==========
+Historical Reports
+==================
 
-Consumer of Historical's S3 tracking -- dumps a JSON of all buckets in an account, along with the configuration.
+A collection of reports using data collected by Historical.
 
 """
 import sys
@@ -18,7 +18,7 @@ ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__)))
 sys.path.insert(0, ROOT)
 
 about = {}
-with open(os.path.join(ROOT, "s3", "__about__.py")) as f:
+with open(os.path.join(ROOT, "historical_reports", "__about__.py")) as f:
     exec(f.read(), about)
 
 
@@ -32,7 +32,8 @@ tests_require = [
     'pytest==3.1.3',
     'moto==1.1.24',
     'coveralls==1.1',
-    'factory-boy==2.9.2'
+    'factory-boy==2.9.2',
+    'tox==2.9.1'
 ]
 
 setup(
@@ -52,7 +53,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            's3report = s3.cli:cli',
+            's3report = historical_reports.s3.cli:cli',
         ]
     },
     keywords=['aws', 'account_management', "s3"]

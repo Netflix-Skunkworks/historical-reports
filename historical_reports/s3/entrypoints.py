@@ -1,14 +1,14 @@
 """
-.. module: s3.entrypoints
+.. module: historical_reports.s3.entrypoints
     :platform: Unix
     :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
 .. author:: Mike Grima <mgrima@netflix.com>
 """
 from raven_python_lambda import RavenLambdaWrapper
-from s3.generate import dump_report
-from s3.update import update_records
-from s3.util import set_config_from_input
+from .generate import dump_report
+from .update import update_records
+from .util import set_config_from_input
 
 
 @RavenLambdaWrapper()

@@ -1,5 +1,5 @@
 """
-.. module: s3.tests.test_everything
+.. module: historical_reports.s3.tests.test_everything
     :platform: Unix
     :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
@@ -8,13 +8,13 @@
 import json
 
 import pytest
-from s3.entrypoints import handler
-from s3.config import CONFIG
-from s3.generate import dump_report
+from historical_reports.s3.entrypoints import handler
+from historical_reports.s3.config import CONFIG
+from historical_reports.s3.generate import dump_report
 from historical.s3.models import CurrentS3Model
-from s3.models import S3ReportSchema
-from s3.update import process_dynamodb_record, update_records
-from s3.util import dump_to_s3, set_config_from_input
+from historical_reports.s3.models import S3ReportSchema
+from historical_reports.s3.update import process_dynamodb_record, update_records
+from historical_reports.s3.util import dump_to_s3, set_config_from_input
 
 
 class MockContext:

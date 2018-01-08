@@ -1,5 +1,5 @@
 """
-.. module: s3.generate
+.. module: historical_reports.s3.generate
     :platform: Unix
     :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
@@ -10,8 +10,8 @@ import logging
 
 from historical.s3.models import CurrentS3Model
 
-from s3.models import S3ReportSchema
-from s3.util import dump_to_s3
+from .models import S3ReportSchema
+from .util import dump_to_s3
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')

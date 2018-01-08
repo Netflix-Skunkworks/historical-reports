@@ -1,5 +1,5 @@
 """
-.. module: s3.config
+.. module: historical_reports.s3.config
     :platform: Unix
     :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.

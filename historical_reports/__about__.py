@@ -5,8 +5,8 @@ __all__ = [
     "__email__", "__license__", "__copyright__",
 ]
 
-__title__ = "historical_reports_s3"
-__summary__ = "Historical function for generating full dictionary of all S3 buckets and corresponding metadata."
+__title__ = "historical_reports"
+__summary__ = "Collection of reporting functions built on top of Historical data sets."
 __uri__ = "https://github.com/Netflix-Skunkworks/historical-reports"
 
 __version__ = "0.1.1"

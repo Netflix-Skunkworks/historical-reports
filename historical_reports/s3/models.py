@@ -1,5 +1,5 @@
 """
-.. module: s3.models
+.. module: historical_reports.s3.models
     :platform: Unix
     :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
@@ -9,7 +9,7 @@ from marshmallow import Schema, fields
 from marshmallow.fields import Field
 from datetime import datetime
 
-from s3.config import CONFIG
+from .config import CONFIG
 
 import logging
 

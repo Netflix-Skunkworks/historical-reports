@@ -1,5 +1,5 @@
 """
-.. module: s3.update
+.. module: historical_reports.s3.update
     :platform: Unix
     :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
@@ -11,11 +11,11 @@ import logging
 from historical.attributes import decimal_default
 from historical.common.dynamodb import deserialize_current_dynamo_to_pynamo
 from historical.s3.models import CurrentS3Model
-from s3.generate import dump_report
+from historical_reports.s3.generate import dump_report
 
-from s3.models import S3ReportSchema
-from s3.util import fetch_from_s3, dump_to_s3
-from s3.config import CONFIG
+from .models import S3ReportSchema
+from .util import fetch_from_s3, dump_to_s3
+from .config import CONFIG
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')

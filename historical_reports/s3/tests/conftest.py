@@ -1,5 +1,5 @@
 """
-.. module: s3.tests.conftest
+.. module: historical_reports.s3.tests.conftest
     :platform: Unix
     :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
@@ -10,9 +10,9 @@ import json
 import boto3
 import pytest
 from historical.s3.models import CurrentS3Model
-from s3.models import S3ReportSchema
+from historical_reports.s3.models import S3ReportSchema
 from moto import mock_dynamodb2, mock_s3
-from s3.tests.factories import DynamoDBRecordsFactory, DynamoDBRecordFactory, DynamoDBDataFactory, serialize, \
+from historical_reports.s3.tests.factories import DynamoDBRecordsFactory, DynamoDBRecordFactory, DynamoDBDataFactory, serialize, \
     UserIdentityFactory
 
 S3_BUCKET = """{
