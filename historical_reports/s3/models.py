@@ -24,7 +24,7 @@ def get_generated_time(*args):
 
 def _serialize_bucket(bucket, account_id, region):
     bucket["AccountId"] = account_id
-    bucket["region"] = region
+    bucket["Region"] = region
 
     # Remove fields in the exclusion list:
     for e in CONFIG.exclude_fields:
