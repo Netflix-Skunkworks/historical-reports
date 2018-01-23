@@ -49,7 +49,7 @@ def test_bucket_schema(historical_table):
 
     for name, value in generated_file["buckets"].items():
         assert value["AccountId"] == "123456789012"
-        assert value["region"] == "us-east-1"
+        assert value["Region"] == "us-east-1"
         assert value["Tags"]["theBucketName"] == name
         assert not value.get("_version")
         assert not value.get("Name")
@@ -75,7 +75,7 @@ def test_light_bucket_schema(historical_table):
             assert excluded not in keys
 
         assert bucket["AccountId"] == "123456789012"
-        assert bucket["region"] == "us-east-1"
+        assert bucket["Region"] == "us-east-1"
 
     # Clean-up:
     CONFIG.exclude_fields = old_fields
@@ -115,7 +115,7 @@ def test_dump_report(dump_buckets, historical_table, lambda_entry):
 
         for name, value in file["buckets"].items():
             assert value["AccountId"] == "123456789012"
-            assert value["region"] == "us-east-1"
+            assert value["Region"] == "us-east-1"
             assert value["Tags"]["theBucketName"] == name
             assert not value.get("_version")
             assert not value.get("Name")
@@ -183,7 +183,7 @@ def test_bucket_schema_for_events(historical_table, generated_report, bucket_eve
 
     for name, value in full_report["buckets"].items():
         assert value["AccountId"] == "123456789012"
-        assert value["region"] == "us-east-1"
+        assert value["Region"] == "us-east-1"
         assert value["Tags"]["theBucketName"] == name
         assert not value.get("_version")
         assert not value.get("Name")
@@ -216,7 +216,7 @@ def test_lite_bucket_schema_for_events(historical_table, bucket_event):
             assert excluded not in keys
 
         assert bucket["AccountId"] == "123456789012"
-        assert bucket["region"] == "us-east-1"
+        assert bucket["Region"] == "us-east-1"
 
     # Clean-up:
     CONFIG.exclude_fields = old_fields
