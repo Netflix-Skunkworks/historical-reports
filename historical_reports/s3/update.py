@@ -11,11 +11,11 @@ import logging
 from historical.attributes import decimal_default
 from historical.common.dynamodb import deserialize_current_dynamo_to_pynamo
 from historical.s3.models import CurrentS3Model
-from historical_reports.s3.generate import dump_report
 
-from .models import S3ReportSchema
-from .util import fetch_from_s3, dump_to_s3
-from .config import CONFIG
+from historical_reports.s3.generate import dump_report
+from historical_reports.s3.models import S3ReportSchema
+from historical_reports.s3.util import fetch_from_s3, dump_to_s3
+from historical_reports.s3.config import CONFIG
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')

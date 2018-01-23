@@ -9,8 +9,8 @@ import logging
 
 import click
 
-from .config import CONFIG
-from .generate import dump_report
+from historical_reports.s3.config import CONFIG
+from historical_reports.s3.generate import dump_report
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
@@ -37,7 +37,7 @@ def get_dump_prefix(ctx, param, prefix):
 
 @cli.command()
 @click.option("--bucket", type=click.STRING, required=True, help="Comma separated list of S3 bucket to dump the "
-                                                                      "report to.", callback=get_bucket)
+                                                                 "report to.", callback=get_bucket)
 @click.option("--exclude-fields", type=click.STRING, required=False, default="Name,_version",
               help="Comma separated top-level fields to not be included in the final report.",
               callback=get_exclude_fields)

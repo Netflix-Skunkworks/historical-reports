@@ -9,7 +9,7 @@ import boto3
 from botocore.exceptions import ClientError
 from retrying import retry
 
-from .config import CONFIG
+from historical_reports.s3.config import CONFIG
 
 import logging
 

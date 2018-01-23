@@ -10,8 +10,8 @@ import logging
 
 from historical.s3.models import CurrentS3Model
 
-from .models import S3ReportSchema
-from .util import dump_to_s3
+from historical_reports.s3.models import S3ReportSchema
+from historical_reports.s3.util import dump_to_s3
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
