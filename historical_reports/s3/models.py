@@ -9,7 +9,7 @@ from marshmallow import Schema, fields
 from marshmallow.fields import Field
 from datetime import datetime
 
-from .config import CONFIG
+from historical_reports.s3.config import CONFIG
 
 import logging
 
@@ -24,7 +24,7 @@ def get_generated_time(*args):
 
 def _serialize_bucket(bucket, account_id, region):
     bucket["AccountId"] = account_id
-    bucket["Region"] = region
+    bucket["region"] = region
 
     # Remove fields in the exclusion list:
     for e in CONFIG.exclude_fields:
