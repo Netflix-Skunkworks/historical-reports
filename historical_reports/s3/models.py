@@ -41,7 +41,7 @@ class BucketField(Field):
             name = b.configuration.attribute_values["Name"]  # Store because removed by default.
 
             # Add the bucket:
-            buckets[name] = _serialize_bucket(b.configuration.attribute_values, b.accountId, b.region)
+            buckets[name] = _serialize_bucket(b.configuration.attribute_values, b.accountId, b.Region)
 
         return buckets
 

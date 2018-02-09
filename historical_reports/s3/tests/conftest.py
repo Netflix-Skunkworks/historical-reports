@@ -32,7 +32,7 @@ S3_BUCKET = """{
     "accountId": "123456789012",
     "eventTime": "2017-11-10T18:33:44Z",
     "BucketName": "testbucket{number}",
-    "region": "us-east-1",
+    "Region": "us-east-1",
     "Tags": {
         "theBucketName": "testbucket{number}"
     },
