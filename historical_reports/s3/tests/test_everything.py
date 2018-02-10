@@ -132,7 +132,7 @@ def test_process_dynamodb_record(bucket_event, generated_report, change_type):
     process_dynamodb_record(bucket_event["Records"][0], generated_report)
 
     assert len(generated_report["all_buckets"]) == 1
-    assert generated_report["all_buckets"][0].region == "us-east-1"
+    assert generated_report["all_buckets"][0].Region == "us-east-1"
 
 
 def test_process_dynamodb_record_deletion(delete_bucket_event, generated_report):
@@ -191,7 +191,7 @@ def test_bucket_schema_for_events(historical_table, generated_report, bucket_eve
 
 def test_lite_bucket_schema_for_events(historical_table, bucket_event):
     old_fields = CONFIG.exclude_fields
-    CONFIG.exclude_fields = "Name,_version,Grants,LifecycleRules,Logging,Policy,Tags,Versioning,Website,Cors," \
+    CONFIG.exclude_fields = "Name,Owner,_version,Grants,LifecycleRules,Logging,Policy,Tags,Versioning,Website,Cors," \
                             "Notifications,Acceleration,Replication,CreationDate,AnalyticsConfigurations," \
                             "MetricsConfigurations,InventoryConfigurations".split(",")
 
