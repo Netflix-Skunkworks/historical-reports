@@ -23,14 +23,15 @@ with open(os.path.join(ROOT, "historical_reports", "__about__.py")) as f:
 
 
 install_requires = [
-    'historical>=0.1.7',
+    'historical>=0.1.9',
     'retrying==1.3.3',
     'click==6.7'
 ]
 
 tests_require = [
     'pytest==3.1.3',
-    'moto>=1.1.24',
+    'pytest-cov>=2.5.1',
+    'moto>=1.3.2',
     'coveralls==1.1',
     'factory-boy==2.9.2',
     'tox==2.9.1'
