@@ -3,7 +3,7 @@ python:
   - "3.6"
 
 install:
-  - pip install tox-travis coveralls
+  - pip install tox-travis
 
 script:
-  - tox -e reports
+  - tox
