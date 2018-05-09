@@ -29,6 +29,7 @@ S3_BUCKET = """{
         "principalId": "AROAIKELBS2RNWG7KASDF:joe@example.com",
         "type": "Service"
     },
+    "eventSource": "aws.s3",
     "accountId": "123456789012",
     "eventTime": "2017-11-10T18:33:44Z",
     "BucketName": "testbucket{number}",
