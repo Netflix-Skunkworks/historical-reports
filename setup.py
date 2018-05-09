@@ -23,7 +23,7 @@ with open(os.path.join(ROOT, "historical_reports", "__about__.py")) as f:
 
 
 install_requires = [
-    'historical>=0.1.9',
+    'historical>=0.2.1',
     'retrying==1.3.3',
     'click==6.7'
 ]
