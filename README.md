@@ -3,6 +3,7 @@ Historical Reports
 [![serverless](http://public.serverless.com/badges/v3.svg)](http://www.serverless.com)
 [![Build Status](https://travis-ci.org/Netflix-Skunkworks/historical-reports.svg?branch=master)](https://travis-ci.org/Netflix-Skunkworks/historical-reports) 
 [![Coverage Status](https://coveralls.io/repos/github/Netflix-Skunkworks/historical-reports/badge.svg)](https://coveralls.io/github/Netflix-Skunkworks/historical-reports)
+[![PyPI version](https://badge.fury.io/py/historical-reports.svg)](https://badge.fury.io/py/historical-reports)
 
 ## Historical-Reports is under heavy development and is not ready for production use.
 
@@ -18,7 +19,7 @@ The following reports are available:
 
 # Report Functions
 
-## S3 [![PyPI version](https://badge.fury.io/py/historical-reports-s3.svg)](https://badge.fury.io/py/historical-reports-s3)
+## S3 
 This is similar in nature to [SWAG](https://github.com/Netflix-Skunkworks/swag-client), this generates a global dictionary 
 of all S3 buckets you have in your account, along with metadata about them. 
 This report gets generated into JSON and stored into an S3 bucket(s) of your choosing. The primary
@@ -55,16 +56,4 @@ The following IAM permissions are required for the S3 lambda function to execute
     }
 
 # Deployment
-Deployment can be achieved via the serverless tool. A sample serverless configuration is provided for each report type (under `serverless-examples/`).
-Each report is designed to be an independent lambda function, which can be deployed to any number of AWS accounts and regions.
-
-To begin deployment, you would need to first create a Python 3 virtual environment specific to the report function you want to deploy. Then,
-grab AWS credentials to permit Serverless to:
-1. Create/Modify/Delete CloudFormation templates
-1. Create/Modify/Delete Lambda functions
-1. Put and delete assets into/from a specific S3 bucket that contains the Lambda function
-1. Create/Modify/Delete CloudWatch Logs and CloudWatch Event Rules
-1. Create/Modify/Delete DynamoDB Streams
-
-Once you have `serverless` installed, and are in an active Python 3 virtual environment, you can run `sls package -s STACK -r REGION`.
-Once you verify that it has a sufficient configuration, you would then `sls deploy -s STAGE -r REGION` your deployment.
+The Deployment docs are currently being re-written. We will have more to announce soon!

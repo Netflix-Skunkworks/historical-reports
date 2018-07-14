@@ -126,7 +126,8 @@ def test_dump_report(dump_buckets, historical_table, lambda_entry):
 
 @pytest.mark.parametrize("change_type", ["INSERT", "MODIFY"])
 def test_process_dynamodb_record(bucket_event, generated_report, change_type):
-    bucket_event["Records"][0]["eventName"] = change_type
+    bucket_event["Records"][0]["body"] = bucket_event["Records"][0]["body"].replace(
+        '\"eventName\": \"INSERT\"', '\"eventName\": \"{}\"'.format(change_type))
     generated_report["all_buckets"] = []
 
     process_dynamodb_record(bucket_event["Records"][0], generated_report)
@@ -145,13 +146,25 @@ def test_process_dynamodb_record_deletion(delete_bucket_event, generated_report)
     # Check if removal logic works:
     generated_report["buckets"]["testbucketNEWBUCKET"] = {"some configuration": "this should be deleted"}
 
-    # If we receive a removal event that is NOT from a TTL, that should not have any effect:
-    delete_bucket_event["Records"][0]["eventName"] = "REMOVE"
-    process_dynamodb_record(delete_bucket_event["Records"][0], generated_report)
-    assert generated_report["buckets"]["testbucketNEWBUCKET"]
-
     # Standard "MODIFY" for deletion:
     delete_bucket_event["Records"][0]["eventName"] = "MODIFY"
+    process_dynamodb_record(delete_bucket_event["Records"][0], generated_report)
+    assert not generated_report["buckets"].get("testbucketNEWBUCKET")
+
+
+def test_process_dynamodb_deletion_event(delete_bucket_event, generated_report):
+    generated_report["all_buckets"] = []
+    generated_report["buckets"]["testbucketNEWBUCKET"] = {"some configuration": "this should be deleted"}
+    delete_bucket_event["Records"][0]["body"] = delete_bucket_event["Records"][0]["body"].replace(
+        '\"eventName\": \"MODIFY\"', '\"eventName\": \"{}\"'.format("REMOVE"))
+    process_dynamodb_record(delete_bucket_event["Records"][0], generated_report)
+
+    # Should not do anything -- since not present in the list:
+    assert not generated_report["all_buckets"]
+
+    # If we receive a removal event that is NOT from a TTL, that should remove the bucket.
+    delete_bucket_event["Records"][0]["eventName"] = "REMOVE"
+
     process_dynamodb_record(delete_bucket_event["Records"][0], generated_report)
     assert not generated_report["buckets"].get("testbucketNEWBUCKET")
 
