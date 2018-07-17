@@ -12,8 +12,9 @@ import pytest
 from historical.s3.models import CurrentS3Model
 from historical_reports.s3.models import S3ReportSchema
 from moto import mock_dynamodb2, mock_s3
-from historical_reports.s3.tests.factories import DynamoDBRecordsFactory, DynamoDBRecordFactory, DynamoDBDataFactory, serialize, \
-    UserIdentityFactory
+from historical_reports.s3.tests.factories import DynamoDBRecordFactory, DynamoDBDataFactory, \
+    serialize, \
+    UserIdentityFactory, RecordsFactory, SQSDataFactory, SnsDataFactory
 
 S3_BUCKET = """{
     "arn": "arn:aws:s3:::testbucket{number}",
@@ -32,6 +33,7 @@ S3_BUCKET = """{
     "eventSource": "aws.s3",
     "accountId": "123456789012",
     "eventTime": "2017-11-10T18:33:44Z",
+    "eventSource": "aws.s3",
     "BucketName": "testbucket{number}",
     "Region": "us-east-1",
     "Tags": {
@@ -129,20 +131,18 @@ def generated_report(generated_file):
 def bucket_event():
     new_bucket = json.loads(S3_BUCKET.replace("{number}", "NEWBUCKET"))
 
-    new_item = DynamoDBRecordsFactory(
-        records=[
-            DynamoDBRecordFactory(
-                dynamodb=DynamoDBDataFactory(
-                    NewImage=new_bucket,
-                    Keys={
-                        'arn': new_bucket['arn']
-                    }
-                ),
-                eventName='INSERT'
-            )
-        ]
-    )
-    return json.loads(json.dumps(new_item, default=serialize))
+    new_item = json.dumps(DynamoDBRecordFactory(
+        dynamodb=DynamoDBDataFactory(
+            NewImage=new_bucket,
+            Keys={
+                'arn': new_bucket['arn']
+            }
+        ),
+        eventName='INSERT'), default=serialize)
+
+    records = RecordsFactory(records=[SQSDataFactory(body=json.dumps(SnsDataFactory(Message=new_item),
+                                                                     default=serialize))])
+    return json.loads(json.dumps(records, default=serialize))
 
 
 @pytest.fixture(scope="function")
@@ -150,44 +150,41 @@ def delete_bucket_event():
     delete_bucket = json.loads(S3_BUCKET.replace("{number}", "NEWBUCKET"))
     delete_bucket["configuration"] = {}
 
-    new_item = DynamoDBRecordsFactory(
-        records=[
-            DynamoDBRecordFactory(
-                dynamodb=DynamoDBDataFactory(
-                    NewImage=delete_bucket,
-                    Keys={
-                        'arn': delete_bucket['arn']
-                    }
-                ),
-                eventName='MODIFY'
-            )
-        ]
-    )
-    return json.loads(json.dumps(new_item, default=serialize))
+    new_item = json.dumps(DynamoDBRecordFactory(
+        dynamodb=DynamoDBDataFactory(
+            NewImage=delete_bucket,
+            Keys={
+                'arn': delete_bucket['arn']
+            }
+        ),
+        eventName='MODIFY'), default=serialize)
+
+    records = RecordsFactory(records=[SQSDataFactory(body=json.dumps(SnsDataFactory(Message=new_item),
+                                                                     default=serialize))])
+
+    return json.loads(json.dumps(records, default=serialize))
 
 
 @pytest.fixture(scope="function")
 def ttl_event():
     bucket = json.loads(S3_BUCKET.replace("{number}", "NEWBUCKET"))
 
-    new_item = DynamoDBRecordsFactory(
-        records=[
-            DynamoDBRecordFactory(
-                dynamodb=DynamoDBDataFactory(
-                    OldImage=bucket,
-                    Keys={
-                        'arn': bucket['arn']
-                    }
-                ),
-                eventName='REMOVE',
-                userIdentity=UserIdentityFactory(
-                    type='Service',
-                    principalId='dynamodb.amazonaws.com'
-                )
-            )
-        ]
-    )
-    return json.loads(json.dumps(new_item, default=serialize))
+    new_item = json.dumps(DynamoDBRecordFactory(
+        dynamodb=DynamoDBDataFactory(
+            OldImage=bucket,
+            Keys={
+                'arn': bucket['arn']
+            }),
+        eventName='REMOVE',
+        userIdentity=UserIdentityFactory(
+            type='Service',
+            principalId='dynamodb.amazonaws.com'
+        )), default=serialize)
+
+    records = RecordsFactory(records=[SQSDataFactory(body=json.dumps(SnsDataFactory(Message=new_item),
+                                                                     default=serialize))])
+
+    return json.loads(json.dumps(records, default=serialize))
 
 
 @pytest.fixture(scope="function")

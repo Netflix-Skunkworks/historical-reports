@@ -9,8 +9,8 @@ import json
 import logging
 
 from historical.attributes import decimal_default
-from historical.common.dynamodb import deserialize_current_dynamo_to_pynamo
 from historical.s3.models import CurrentS3Model
+from historical.common.dynamodb import deserialize_durable_record_to_current_model
 
 from historical_reports.s3.generate import dump_report
 from historical_reports.s3.models import S3ReportSchema
@@ -23,30 +23,43 @@ log.setLevel(logging.INFO)
 
 
 def process_dynamodb_record(record, s3_report):
-    """Processes a group of DynamoDB NewImage records."""
-    if record['eventName'] in ['INSERT', 'MODIFY']:
-        # Serialize that specific report:
-        modifed_bucket = deserialize_current_dynamo_to_pynamo(record, CurrentS3Model)
+    """
+    Processes a group of DynamoDB NewImage records.
 
-        # Is this a soft-deletion? (Config set to {})?
-        if not modifed_bucket.configuration.attribute_values:
-            s3_report["buckets"].pop(modifed_bucket.BucketName, None)
-        else:
-            s3_report["all_buckets"].append(modifed_bucket)
+    This logic is largely copy and pasted from Historical with few modifications.
+    """
+    # De-serialize the the record (it's an SNS message inside of an SQS event message):
+    record = json.loads(json.loads(record['body'])['Message'])
 
     if record['eventName'] == 'REMOVE':
-        # We are *ONLY* tracking the deletions from the DynamoDB TTL service.
-        # Why? Because when we process deletion records, we are first saving a new "empty" revision to the "Current"
-        # table. The "empty" revision will then trigger this Lambda as a "MODIFY" event. Then, right after it saves
-        # the "empty" revision, it will then delete the item from the "Current" table. At that point,
-        # we have already saved the "deletion revision" to the "Historical" table. Thus, no need to process
-        # the deletion events -- except for TTL expirations (which should never happen -- but if they do, you need
-        # to investigate why...)
-        if record.get('userIdentity'):
-            if record['userIdentity']['type'] == 'Service':
-                if record['userIdentity']['principalId'] == 'dynamodb.amazonaws.com':
-                    log.debug("Processing TTL deletion.")
-                    s3_report["buckets"].pop(record['dynamodb']['OldImage']["BucketName"]["S"], None)
+        # This logic is copied and pasted from Historical. The Durable table does not (yet? maybe? never?) have
+        # TTLs. As such, this should never happen here:
+        # if record.get('userIdentity'):
+        #     if record['userIdentity']['type'] == 'Service':
+        #         if record['userIdentity']['principalId'] == 'dynamodb.amazonaws.com':
+        #             s3_report["buckets"].pop(record['dynamodb']['OldImage']["BucketName"]["S"], None)
+        #             log.error("[?] Processing TTL deletion for ARN/Event Time: {}/{} in the "
+        #                       "Durable table. This is odd...".format(
+        #                         record['dynamodb']['Keys']['arn']['S'],
+        #                         record['dynamodb']['OldImage']['eventTime']['S']))
+
+        # This should **NOT** be happening in the Durable table... If it does, we need to raise an exception:
+        # else:
+        s3_report["buckets"].pop(record['dynamodb']['OldImage']["BucketName"]["S"], None)
+        log.error('[?] Item with ARN/Event Time: {}/{} was deleted from the Durable table.'
+                  ' This is odd...'.format(record['dynamodb']['Keys']['arn']['S'],
+                                           record['dynamodb']['OldImage']['eventTime']['S']))
+
+    if record['eventName'] in ['INSERT', 'MODIFY']:
+        # Serialize that specific report:
+        modified_bucket = deserialize_durable_record_to_current_model(record, CurrentS3Model)
+
+        # If the current object is too big for SNS, and it's not in the current table, then delete it.
+        # -- OR -- if this a soft-deletion? (Config set to {})
+        if not modified_bucket or not modified_bucket.configuration.attribute_values:
+            s3_report["buckets"].pop(record['dynamodb']['NewImage']["BucketName"]["S"], None)
+        else:
+            s3_report["all_buckets"].append(modified_bucket)
 
 
 def update_records(records, commit=True):

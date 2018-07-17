@@ -1,9 +1,9 @@
 """
-.. module: s3-report.tests.factories
+.. module: s3.tests.factories
     :platform: Unix
-    :copyright: (c) 2017 by Netflix Inc., see AUTHORS for more
+    :copyright: (c) 2018 by Netflix Inc., see AUTHORS for more
     :license: Apache, see LICENSE for more details.
-.. author:: Kevin Glisson <kglisson@netflix.com>
+.. author:: Mike Grima <mgrima@netflix.com>
 """
 # Copy and pasted the factories from Historical.
 import datetime
@@ -31,6 +31,23 @@ def serialize(obj):
 class Records(object):
     def __init__(self, records):
         self.Records = records
+
+
+class RecordsFactory(Factory):
+    """Factory for generating multiple Event (SNS, CloudWatch, Kinesis, DynamoDB, SQS) records."""
+    class Meta:
+        model = Records
+
+    @post_generation
+    def Records(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing.
+            return
+
+        if extracted:
+            # A list of groups were passed in, use them
+            for record in extracted:
+                self.Records.append(record)
 
 
 class SessionIssuer(object):
@@ -102,17 +119,40 @@ class DynamoDBRecordFactory(Factory):
     userIdentity = SubFactory(UserIdentityFactory)
 
 
-class DynamoDBRecordsFactory(Factory):
+class SnsData:
+    def __init__(self, Message, EventSource, EventVersion, EventSubscriptionArn):
+        self.Message = Message
+        self.EventSource = EventSource
+        self.EventVersion = EventVersion
+        self.EventSubscriptionArn = EventSubscriptionArn
+
+
+class SnsDataFactory(Factory):
     class Meta:
-        model = Records
+        model = SnsData
+    Message = FuzzyText()
+    EventVersion = FuzzyText()
+    EventSource = "aws:sns"
+    EventSubscriptionArn = FuzzyText()
 
-    @post_generation
-    def Records(self, create, extracted, **kwargs):
-        if not create:
-            # Simple build, do nothing.
-            return
 
-        if extracted:
-            # A list of groups were passed in, use them
-            for record in extracted:
-                self.Records.append(record)
+class SQSData(object):
+    def __init__(self, messageId, receiptHandle, body):
+        self.messageId = messageId
+        self.receiptHandle = receiptHandle
+        self.body = body
+        self.eventSource = "aws:sqs"
+
+
+class SQSDataFactory(Factory):
+    class Meta:
+        model = SQSData
+
+    body = FuzzyText()
+    messageId = FuzzyText()
+    receiptHandle = FuzzyText()
+
+
+class SQSRecord(object):
+    def __init__(self, sqs):
+        self.sqs = sqs
