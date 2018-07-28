@@ -8,6 +8,8 @@
 import json
 
 import pytest
+from historical.common.util import deserialize_records
+
 from historical_reports.s3.entrypoints import handler
 from historical_reports.s3.config import CONFIG
 from historical_reports.s3.generate import dump_report
@@ -129,8 +131,9 @@ def test_process_dynamodb_record(bucket_event, generated_report, change_type):
     bucket_event["Records"][0]["body"] = bucket_event["Records"][0]["body"].replace(
         '\"eventName\": \"INSERT\"', '\"eventName\": \"{}\"'.format(change_type))
     generated_report["all_buckets"] = []
+    records = deserialize_records(bucket_event["Records"])
 
-    process_dynamodb_record(bucket_event["Records"][0], generated_report)
+    process_dynamodb_record(records[0], generated_report)
 
     assert len(generated_report["all_buckets"]) == 1
     assert generated_report["all_buckets"][0].Region == "us-east-1"
@@ -138,7 +141,8 @@ def test_process_dynamodb_record(bucket_event, generated_report, change_type):
 
 def test_process_dynamodb_record_deletion(delete_bucket_event, generated_report):
     generated_report["all_buckets"] = []
-    process_dynamodb_record(delete_bucket_event["Records"][0], generated_report)
+    records = deserialize_records(delete_bucket_event["Records"])
+    process_dynamodb_record(records[0], generated_report)
 
     # Should not do anything -- since not present in the list:
     assert not generated_report["all_buckets"]
@@ -148,7 +152,8 @@ def test_process_dynamodb_record_deletion(delete_bucket_event, generated_report)
 
     # Standard "MODIFY" for deletion:
     delete_bucket_event["Records"][0]["eventName"] = "MODIFY"
-    process_dynamodb_record(delete_bucket_event["Records"][0], generated_report)
+    records = deserialize_records(delete_bucket_event["Records"])
+    process_dynamodb_record(records[0], generated_report)
     assert not generated_report["buckets"].get("testbucketNEWBUCKET")
 
 
@@ -157,33 +162,36 @@ def test_process_dynamodb_deletion_event(delete_bucket_event, generated_report):
     generated_report["buckets"]["testbucketNEWBUCKET"] = {"some configuration": "this should be deleted"}
     delete_bucket_event["Records"][0]["body"] = delete_bucket_event["Records"][0]["body"].replace(
         '\"eventName\": \"MODIFY\"', '\"eventName\": \"{}\"'.format("REMOVE"))
-    process_dynamodb_record(delete_bucket_event["Records"][0], generated_report)
+    records = deserialize_records(delete_bucket_event["Records"])
+    process_dynamodb_record(records[0], generated_report)
 
     # Should not do anything -- since not present in the list:
     assert not generated_report["all_buckets"]
 
     # If we receive a removal event that is NOT from a TTL, that should remove the bucket.
     delete_bucket_event["Records"][0]["eventName"] = "REMOVE"
-
-    process_dynamodb_record(delete_bucket_event["Records"][0], generated_report)
+    records = deserialize_records(delete_bucket_event["Records"])
+    process_dynamodb_record(records[0], generated_report)
     assert not generated_report["buckets"].get("testbucketNEWBUCKET")
 
 
 def test_process_dynamodb_record_ttl(ttl_event, generated_report):
     generated_report["all_buckets"] = []
-    process_dynamodb_record(ttl_event["Records"][0], generated_report)
+    records = deserialize_records(ttl_event["Records"])
+    process_dynamodb_record(records[0], generated_report)
 
     # Should not do anything -- since not present in the list:
     assert not generated_report["all_buckets"]
 
     generated_report["buckets"]["testbucketNEWBUCKET"] = {"some configuration": "this should be deleted"}
-    process_dynamodb_record(ttl_event["Records"][0], generated_report)
+    process_dynamodb_record(records[0], generated_report)
     assert not generated_report["buckets"].get("testbucketNEWBUCKET")
 
 
 def test_bucket_schema_for_events(historical_table, generated_report, bucket_event):
     generated_report["all_buckets"] = []
-    process_dynamodb_record(bucket_event["Records"][0], generated_report)
+    records = deserialize_records(bucket_event["Records"])
+    process_dynamodb_record(records[0], generated_report)
 
     full_report = S3ReportSchema(strict=True).dump(generated_report).data
 
@@ -212,7 +220,8 @@ def test_lite_bucket_schema_for_events(historical_table, bucket_event):
     generated_report = S3ReportSchema(strict=True).dump({"all_buckets": all_buckets}).data
 
     generated_report["all_buckets"] = []
-    process_dynamodb_record(bucket_event["Records"][0], generated_report)
+    records = deserialize_records(bucket_event["Records"])
+    process_dynamodb_record(records[0], generated_report)
 
     lite_report = S3ReportSchema(strict=True).dump(generated_report).data
 
@@ -248,7 +257,8 @@ def test_update_records(existing_s3_report, historical_table, bucket_event, dele
     if lambda_entry:
         handler(bucket_event, MockContext())
     else:
-        update_records(bucket_event["Records"])
+        records = deserialize_records(bucket_event["Records"])
+        update_records(records)
 
     new_report = json.loads(
         dump_buckets.get_object(Bucket="dump0", Key="historical-s3-report.json")["Body"].read().decode("utf-8")
@@ -263,7 +273,8 @@ def test_update_records(existing_s3_report, historical_table, bucket_event, dele
     if lambda_entry:
         handler(delete_bucket_event, MockContext())
     else:
-        update_records(delete_bucket_event["Records"])
+        records = deserialize_records(delete_bucket_event["Records"])
+        update_records(records)
 
     delete_report = json.loads(
         dump_buckets.get_object(Bucket="dump0", Key="historical-s3-report.json")["Body"].read().decode("utf-8")

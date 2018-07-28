@@ -28,9 +28,6 @@ def process_dynamodb_record(record, s3_report):
 
     This logic is largely copy and pasted from Historical with few modifications.
     """
-    # De-serialize the the record (it's an SNS message inside of an SQS event message):
-    record = json.loads(json.loads(record['body'])['Message'])
-
     if record['eventName'] == 'REMOVE':
         # This logic is copied and pasted from Historical. The Durable table does not (yet? maybe? never?) have
         # TTLs. As such, this should never happen here:

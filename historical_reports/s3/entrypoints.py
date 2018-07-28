@@ -5,6 +5,7 @@
     :license: Apache, see LICENSE for more details.
 .. author:: Mike Grima <mgrima@netflix.com>
 """
+from historical.common.util import deserialize_records
 from raven_python_lambda import RavenLambdaWrapper
 from historical_reports.s3.generate import dump_report
 from historical_reports.s3.update import update_records
@@ -20,8 +21,11 @@ def handler(event, context):
     set_config_from_input(event)
 
     if event.get("Records"):
+        # Deserialize the records:
+        records = deserialize_records(event["Records"])
+
         # Update event:
-        update_records(event["Records"])
+        update_records(records)
 
     else:
         # Generate event:
