@@ -55,8 +55,10 @@ def process_dynamodb_record(record, s3_report):
         # If the current object is too big for SNS, and it's not in the current table, then delete it.
         # -- OR -- if this a soft-deletion? (Config set to {})
         if not modified_bucket or not modified_bucket.configuration.attribute_values:
+            log.debug('Processing deletion for: {}'.format(record['dynamodb']['NewImage']["BucketName"]["S"]))
             s3_report["buckets"].pop(record['dynamodb']['NewImage']["BucketName"]["S"], None)
         else:
+            log.debug('Processing: {}'.format(modified_bucket.BucketName))
             s3_report["all_buckets"].append(modified_bucket)
 
 
