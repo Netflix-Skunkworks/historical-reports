@@ -9,13 +9,15 @@ from marshmallow import Schema, fields
 from marshmallow.fields import Field
 from datetime import datetime
 
+from historical.constants import LOGGING_LEVEL
+
 from historical_reports.s3.config import CONFIG
 
 import logging
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
-log.setLevel(logging.INFO)
+log.setLevel(LOGGING_LEVEL)
 
 
 def get_generated_time(*args):

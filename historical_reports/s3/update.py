@@ -8,6 +8,7 @@
 import json
 import logging
 
+from historical.constants import LOGGING_LEVEL
 from historical.attributes import decimal_default
 from historical.s3.models import CurrentS3Model
 from historical.common.dynamodb import deserialize_durable_record_to_current_model
@@ -19,7 +20,7 @@ from historical_reports.s3.config import CONFIG
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
-log.setLevel(logging.INFO)
+log.setLevel(LOGGING_LEVEL)
 
 
 def process_dynamodb_record(record, s3_report):

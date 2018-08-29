@@ -9,12 +9,14 @@ import logging
 
 import click
 
+from historical.constants import LOGGING_LEVEL
+
 from historical_reports.s3.config import CONFIG
 from historical_reports.s3.generate import dump_report
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
-log.setLevel(logging.DEBUG)
+log.setLevel(LOGGING_LEVEL)
 
 
 @click.group()
