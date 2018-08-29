@@ -8,6 +8,7 @@
 import json
 import logging
 
+from historical.constants import LOGGING_LEVEL
 from historical.s3.models import CurrentS3Model
 
 from historical_reports.s3.models import S3ReportSchema
@@ -15,7 +16,7 @@ from historical_reports.s3.util import dump_to_s3
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
-log.setLevel(logging.WARNING)
+log.setLevel(LOGGING_LEVEL)
 
 
 def dump_report(commit=True):

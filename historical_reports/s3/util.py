@@ -9,13 +9,15 @@ import boto3
 from botocore.exceptions import ClientError
 from retrying import retry
 
+from historical.constants import LOGGING_LEVEL
+
 from historical_reports.s3.config import CONFIG
 
 import logging
 
 logging.basicConfig()
 log = logging.getLogger('historical-reports-s3')
-log.setLevel(logging.INFO)
+log.setLevel(LOGGING_LEVEL)
 
 
 @retry(stop_max_attempt_number=3, wait_exponential_multiplier=1000, wait_exponential_max=10000)
