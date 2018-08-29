@@ -38,7 +38,7 @@ class BucketField(Field):
         buckets = data.get("buckets", {})
         for b in data["all_buckets"]:
             log.debug("Fetched details for bucket: {}".format(b.arn))
-            name = b.configuration.attribute_values["Name"]  # Store because removed by default.
+            name = b.BucketName
 
             # Add the bucket:
             buckets[name] = _serialize_bucket(b.configuration.attribute_values, b.accountId, b.Region)

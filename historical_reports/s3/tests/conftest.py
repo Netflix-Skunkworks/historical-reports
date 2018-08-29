@@ -30,6 +30,7 @@ S3_BUCKET = """{
         "principalId": "AROAIKELBS2RNWG7KASDF:joe@example.com",
         "type": "Service"
     },
+    "version": 9,
     "eventSource": "aws.s3",
     "accountId": "123456789012",
     "eventTime": "2017-11-10T18:33:44Z",
@@ -77,9 +78,7 @@ S3_BUCKET = """{
         "CreationDate": "2006-02-03T16:45:09Z",
         "AnalyticsConfigurations": [],
         "MetricsConfigurations": [],
-        "InventoryConfigurations": [],
-        "Name": "testbucket{number}",
-        "_version": 8
+        "InventoryConfigurations": []
     }
 }"""
 
