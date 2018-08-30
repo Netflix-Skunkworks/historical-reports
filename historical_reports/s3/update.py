@@ -55,27 +55,27 @@ def process_dynamodb_record(record, s3_report):
         # If the current object is too big for SNS, and it's not in the current table, then delete it.
         # -- OR -- if this a soft-deletion? (Config set to {})
         if not modified_bucket or not modified_bucket.configuration.attribute_values:
-            log.debug('Processing deletion for: {}'.format(record['dynamodb']['NewImage']["BucketName"]["S"]))
+            log.debug('[ ] Processing deletion for: {}'.format(record['dynamodb']['NewImage']["BucketName"]["S"]))
             s3_report["buckets"].pop(record['dynamodb']['NewImage']["BucketName"]["S"], None)
         else:
-            log.debug('Processing: {}'.format(modified_bucket.BucketName))
+            log.debug('[ ] Processing: {}'.format(modified_bucket.BucketName))
             s3_report["all_buckets"].append(modified_bucket)
 
 
 def update_records(records, commit=True):
-    log.debug("Starting Record Update.")
+    log.debug("[@] Starting Record Update.")
 
     # First, grab the existing JSON from S3:
     existing_json = fetch_from_s3()
-    log.debug("Grabbed all the existing data from S3.")
+    log.debug("[+] Grabbed all the existing data from S3.")
 
     # If the existing JSON is not present for some reason, then...
     if not existing_json:
         if commit and CONFIG.export_if_missing:
             CONFIG.dump_to_buckets = CONFIG.import_bucket.split(",")
             CONFIG.dump_to_prefix = CONFIG.import_prefix
-            log.info("The report does not exist. Dumping the full report to {}/{}".format(CONFIG.import_bucket,
-                                                                                          CONFIG.import_prefix))
+            log.info("[!] The report does not exist. Dumping the full report to {}/{}".format(CONFIG.import_bucket,
+                                                                                              CONFIG.import_prefix))
             dump_report()
 
         else:
@@ -96,12 +96,12 @@ def update_records(records, commit=True):
 
     # Dump to S3:
     if commit:
-        log.debug("Saving to S3.")
+        log.debug("[-->] Saving to S3.")
 
         # Replace <empty> with "" <-- Due to Pynamo/Dynamo issues...
         dump_to_s3(json.dumps(generated_file, indent=4, default=decimal_default).replace("\"<empty>\"", "\"\"").encode(
             "utf-8"))
     else:
-        log.debug("Commit flag not set, not saving.")
+        log.debug("[/] Commit flag not set, not saving.")
 
-    log.debug("Completed S3 report update.")
+    log.debug("[@] Completed S3 report update.")
