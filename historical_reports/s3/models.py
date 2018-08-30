@@ -39,7 +39,7 @@ class BucketField(Field):
     def _serialize(self, value, attr=None, data=None):
         buckets = data.get("buckets", {})
         for b in data["all_buckets"]:
-            log.debug("Fetched details for bucket: {}".format(b.arn))
+            log.debug("[+] Fetched details for bucket: {}".format(b.arn))
             name = b.BucketName
 
             # Add the bucket:

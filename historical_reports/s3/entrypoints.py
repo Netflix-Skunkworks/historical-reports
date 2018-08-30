@@ -30,12 +30,16 @@ def handler(event, context):
     set_config_from_input(event)
 
     if event.get("Records"):
+        log.debug('[@] Received update event with records.')
+
         # Deserialize the records:
         records = deserialize_records(event["Records"])
+        log.debug('[ ] Received the (deserialized) records: {}'.format(records))
 
         # Update event:
         update_records(records)
 
     else:
+        log.debug('[@] Received a scheduled event for a full report.')
         # Generate event:
         dump_report()

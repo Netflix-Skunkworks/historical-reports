@@ -44,7 +44,7 @@ def dump_to_s3(file):
 
     # Loop over each bucket and dump:
     for bucket in CONFIG.dump_to_buckets:
-        log.debug("[ ] Dumping to {}/{}".format(bucket, CONFIG.dump_to_prefix))
+        log.debug("[-->] Dumping to {}/{}".format(bucket, CONFIG.dump_to_prefix))
         _upload_to_s3(file, client, bucket, CONFIG.dump_to_prefix)
         log.debug("[+] Complete")
 

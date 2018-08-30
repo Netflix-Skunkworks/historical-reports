@@ -48,5 +48,5 @@ def get_dump_prefix(ctx, param, prefix):
 @click.option("-c", "--commit", default=False, is_flag=True, help="Will only dump to S3 if commit flag is present")
 def generate(bucket, exclude_fields, dump_prefix, commit):
     if not commit:
-        log.warning("COMMIT FLAG NOT SET -- NOT SAVING ANYTHING TO S3!")
+        log.warning("[@] COMMIT FLAG NOT SET -- NOT SAVING ANYTHING TO S3!")
     dump_report(commit=commit)
