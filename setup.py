@@ -24,7 +24,7 @@ with open(os.path.join(ROOT, "historical_reports", "__about__.py")) as f:
 
 install_requires = [
     'botocore==1.10.84',
-    'historical>=0.4.1',
+    'historical>=0.4.2',
     'retrying==1.3.3',
     'click==6.7'
 ]
