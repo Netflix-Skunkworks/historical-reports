@@ -24,9 +24,10 @@ def get_generated_time(*args):
     return datetime.utcnow().replace(tzinfo=None, microsecond=0).isoformat() + "Z"
 
 
-def _serialize_bucket(bucket, account_id, region):
-    bucket["AccountId"] = account_id
-    bucket["Region"] = region
+def _serialize_bucket(bucket, account_id, region, tags):
+    bucket['AccountId'] = account_id
+    bucket['Region'] = region
+    bucket['Tags'] = tags
 
     # Remove fields in the exclusion list:
     for e in CONFIG.exclude_fields:
@@ -39,11 +40,15 @@ class BucketField(Field):
     def _serialize(self, value, attr=None, data=None):
         buckets = data.get("buckets", {})
         for b in data["all_buckets"]:
-            log.debug("[+] Fetched details for bucket: {}".format(b.arn))
-            name = b.BucketName
+            # This function is called whether the buckets are dicts or PynamoDB objects, so always convert to a dict
+            # to make this universal:
+            bucket = dict(b)
+
+            log.debug(f"[+] Fetched details for bucket: {bucket['arn']}")
 
             # Add the bucket:
-            buckets[name] = _serialize_bucket(b.configuration.attribute_values, b.accountId, b.Region)
+            buckets[bucket['BucketName']] = _serialize_bucket(bucket['configuration'], bucket['accountId'],
+                                                              bucket['Region'], bucket['Tags'])
 
         return buckets
 

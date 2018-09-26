@@ -8,10 +8,9 @@
 import json
 import logging
 
-from historical.constants import LOGGING_LEVEL
+from historical.constants import LOGGING_LEVEL, EVENT_TOO_BIG_FLAG
 from historical.attributes import decimal_default
 from historical.s3.models import CurrentS3Model
-from historical.common.dynamodb import deserialize_durable_record_to_current_model
 
 from historical_reports.s3.generate import dump_report
 from historical_reports.s3.models import S3ReportSchema
@@ -23,43 +22,24 @@ log = logging.getLogger('historical-reports-s3')
 log.setLevel(LOGGING_LEVEL)
 
 
-def process_dynamodb_record(record, s3_report):
-    """
-    Processes a group of DynamoDB NewImage records.
+def process_durable_event(record, s3_report):
+    """Processes a group of Historical Durable Table events."""
+    if record.get(EVENT_TOO_BIG_FLAG):
+        result = list(CurrentS3Model.query(record['arn']))
 
-    This logic is largely copy and pasted from Historical with few modifications.
-    """
-    if record['eventName'] == 'REMOVE':
-        # This logic is copied and pasted from Historical. The Durable table does not (yet? maybe? never?) have
-        # TTLs. As such, this should never happen here:
-        # if record.get('userIdentity'):
-        #     if record['userIdentity']['type'] == 'Service':
-        #         if record['userIdentity']['principalId'] == 'dynamodb.amazonaws.com':
-        #             s3_report["buckets"].pop(record['dynamodb']['OldImage']["BucketName"]["S"], None)
-        #             log.error("[?] Processing TTL deletion for ARN/Event Time: {}/{} in the "
-        #                       "Durable table. This is odd...".format(
-        #                         record['dynamodb']['Keys']['arn']['S'],
-        #                         record['dynamodb']['OldImage']['eventTime']['S']))
+        # Is the record too big and also not found in the Current Table? Then delete it:
+        if not result:
+            record['item'] = {'configuration': {}, 'BucketName': record['arn'].split('arn:aws:s3:::')[1]}
 
-        # This should **NOT** be happening in the Durable table... If it does, we need to raise an exception:
-        # else:
-        s3_report["buckets"].pop(record['dynamodb']['OldImage']["BucketName"]["S"], None)
-        log.error('[?] Item with ARN/Event Time: {}/{} was deleted from the Durable table.'
-                  ' This is odd...'.format(record['dynamodb']['Keys']['arn']['S'],
-                                           record['dynamodb']['OldImage']['eventTime']['S']))
-
-    if record['eventName'] in ['INSERT', 'MODIFY']:
-        # Serialize that specific report:
-        modified_bucket = deserialize_durable_record_to_current_model(record, CurrentS3Model)
-
-        # If the current object is too big for SNS, and it's not in the current table, then delete it.
-        # -- OR -- if this a soft-deletion? (Config set to {})
-        if not modified_bucket or not modified_bucket.configuration.attribute_values:
-            log.debug('[ ] Processing deletion for: {}'.format(record['dynamodb']['NewImage']["BucketName"]["S"]))
-            s3_report["buckets"].pop(record['dynamodb']['NewImage']["BucketName"]["S"], None)
         else:
-            log.debug('[ ] Processing: {}'.format(modified_bucket.BucketName))
-            s3_report["all_buckets"].append(modified_bucket)
+            record['item'] = dict(result[0])
+
+    if not record['item']['configuration']:
+        log.debug(f"[ ] Processing deletion for: {record['item']['BucketName']}")
+        s3_report["buckets"].pop(record['item']['BucketName'], None)
+    else:
+        log.debug(f"[ ] Processing: {record['item']['BucketName']}")
+        s3_report["all_buckets"].append(record['item'])
 
 
 def update_records(records, commit=True):
@@ -89,7 +69,7 @@ def update_records(records, commit=True):
     report["all_buckets"] = []
 
     for record in records:
-        process_dynamodb_record(record, report)
+        process_durable_event(record, report)
 
     # Serialize the data:
     generated_file = S3ReportSchema(strict=True).dump(report).data
