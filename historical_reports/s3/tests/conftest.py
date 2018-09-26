@@ -13,8 +13,7 @@ from historical.s3.models import CurrentS3Model
 from historical_reports.s3.models import S3ReportSchema
 from moto import mock_dynamodb2, mock_s3
 from historical_reports.s3.tests.factories import DynamoDBRecordFactory, DynamoDBDataFactory, \
-    serialize, \
-    UserIdentityFactory, RecordsFactory, SQSDataFactory, SnsDataFactory
+    serialize, RecordsFactory, SQSDataFactory
 
 S3_BUCKET = """{
     "arn": "arn:aws:s3:::testbucket{number}",
@@ -34,7 +33,6 @@ S3_BUCKET = """{
     "eventSource": "aws.s3",
     "accountId": "123456789012",
     "eventTime": "2017-11-10T18:33:44Z",
-    "eventSource": "aws.s3",
     "BucketName": "testbucket{number}",
     "Region": "us-east-1",
     "Tags": {
@@ -130,6 +128,8 @@ def generated_report(generated_file):
 def bucket_event():
     new_bucket = json.loads(S3_BUCKET.replace("{number}", "NEWBUCKET"))
 
+    del new_bucket['eventSource']
+
     new_item = json.dumps(DynamoDBRecordFactory(
         dynamodb=DynamoDBDataFactory(
             NewImage=new_bucket,
@@ -139,15 +139,22 @@ def bucket_event():
         ),
         eventName='INSERT'), default=serialize)
 
-    records = RecordsFactory(records=[SQSDataFactory(body=json.dumps(SnsDataFactory(Message=new_item),
-                                                                     default=serialize))])
-    return json.loads(json.dumps(records, default=serialize))
+    import historical.common.proxy
+    historical.common.proxy.HISTORICAL_TECHNOLOGY = 's3'
+
+    from historical.common.proxy import make_proper_simple_record
+
+    records = RecordsFactory(records=[SQSDataFactory(body=make_proper_simple_record(json.loads(new_item)))])
+
+    yield json.loads(json.dumps(records, default=serialize))
 
 
 @pytest.fixture(scope="function")
 def delete_bucket_event():
     delete_bucket = json.loads(S3_BUCKET.replace("{number}", "NEWBUCKET"))
     delete_bucket["configuration"] = {}
+
+    del delete_bucket['eventSource']
 
     new_item = json.dumps(DynamoDBRecordFactory(
         dynamodb=DynamoDBDataFactory(
@@ -156,34 +163,16 @@ def delete_bucket_event():
                 'arn': delete_bucket['arn']
             }
         ),
-        eventName='MODIFY'), default=serialize)
+        eventName='INSERT'), default=serialize)
 
-    records = RecordsFactory(records=[SQSDataFactory(body=json.dumps(SnsDataFactory(Message=new_item),
-                                                                     default=serialize))])
+    import historical.common.proxy
+    historical.common.proxy.HISTORICAL_TECHNOLOGY = 's3'
 
-    return json.loads(json.dumps(records, default=serialize))
+    from historical.common.proxy import make_proper_simple_record
 
+    records = RecordsFactory(records=[SQSDataFactory(body=make_proper_simple_record(json.loads(new_item)))])
 
-@pytest.fixture(scope="function")
-def ttl_event():
-    bucket = json.loads(S3_BUCKET.replace("{number}", "NEWBUCKET"))
-
-    new_item = json.dumps(DynamoDBRecordFactory(
-        dynamodb=DynamoDBDataFactory(
-            OldImage=bucket,
-            Keys={
-                'arn': bucket['arn']
-            }),
-        eventName='REMOVE',
-        userIdentity=UserIdentityFactory(
-            type='Service',
-            principalId='dynamodb.amazonaws.com'
-        )), default=serialize)
-
-    records = RecordsFactory(records=[SQSDataFactory(body=json.dumps(SnsDataFactory(Message=new_item),
-                                                                     default=serialize))])
-
-    return json.loads(json.dumps(records, default=serialize))
+    yield json.loads(json.dumps(records, default=serialize))
 
 
 @pytest.fixture(scope="function")

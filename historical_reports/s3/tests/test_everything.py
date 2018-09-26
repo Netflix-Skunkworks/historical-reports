@@ -9,13 +9,14 @@ import json
 
 import pytest
 from historical.common.util import deserialize_records
+from historical.constants import EVENT_TOO_BIG_FLAG
+from historical.s3.models import CurrentS3Model
 
 from historical_reports.s3.entrypoints import handler
 from historical_reports.s3.config import CONFIG
 from historical_reports.s3.generate import dump_report
-from historical.s3.models import CurrentS3Model
 from historical_reports.s3.models import S3ReportSchema
-from historical_reports.s3.update import process_dynamodb_record, update_records
+from historical_reports.s3.update import process_durable_event, update_records
 from historical_reports.s3.util import dump_to_s3, set_config_from_input
 
 
@@ -126,72 +127,53 @@ def test_dump_report(dump_buckets, historical_table, lambda_entry):
     CONFIG.dump_to_buckets = old_value
 
 
-@pytest.mark.parametrize("change_type", ["INSERT", "MODIFY"])
-def test_process_dynamodb_record(bucket_event, generated_report, change_type):
-    bucket_event["Records"][0]["body"] = bucket_event["Records"][0]["body"].replace(
-        '\"eventName\": \"INSERT\"', '\"eventName\": \"{}\"'.format(change_type))
+def test_process_durable_event(bucket_event, generated_report):
     generated_report["all_buckets"] = []
     records = deserialize_records(bucket_event["Records"])
 
-    process_dynamodb_record(records[0], generated_report)
+    process_durable_event(records[0], generated_report)
 
     assert len(generated_report["all_buckets"]) == 1
-    assert generated_report["all_buckets"][0].Region == "us-east-1"
+    assert generated_report["all_buckets"][0]['Region'] == "us-east-1"
 
 
-def test_process_dynamodb_record_deletion(delete_bucket_event, generated_report):
+def test_process_big_durable_event(bucket_event, generated_report):
+    generated_report["all_buckets"] = []
+
+    record = deserialize_records(bucket_event["Records"])[0]
+    record.pop('item')
+    record[EVENT_TOO_BIG_FLAG] = True
+
+    # Bucket does not exist:
+    process_durable_event(record, generated_report)
+    assert len(generated_report['all_buckets']) == 0
+
+    # Bucket that does exist:
+    record['arn'] = 'arn:aws:s3:::testbucket0'
+    process_durable_event(record, generated_report)
+    assert len(generated_report["all_buckets"]) == 1
+    assert generated_report["all_buckets"][0]['BucketName'] == "testbucket0"
+
+
+def test_process_durable_event_deletion(delete_bucket_event, generated_report):
     generated_report["all_buckets"] = []
     records = deserialize_records(delete_bucket_event["Records"])
-    process_dynamodb_record(records[0], generated_report)
+    process_durable_event(records[0], generated_report)
 
     # Should not do anything -- since not present in the list:
     assert not generated_report["all_buckets"]
 
     # Check if removal logic works:
     generated_report["buckets"]["testbucketNEWBUCKET"] = {"some configuration": "this should be deleted"}
-
-    # Standard "MODIFY" for deletion:
-    delete_bucket_event["Records"][0]["eventName"] = "MODIFY"
     records = deserialize_records(delete_bucket_event["Records"])
-    process_dynamodb_record(records[0], generated_report)
-    assert not generated_report["buckets"].get("testbucketNEWBUCKET")
-
-
-def test_process_dynamodb_deletion_event(delete_bucket_event, generated_report):
-    generated_report["all_buckets"] = []
-    generated_report["buckets"]["testbucketNEWBUCKET"] = {"some configuration": "this should be deleted"}
-    delete_bucket_event["Records"][0]["body"] = delete_bucket_event["Records"][0]["body"].replace(
-        '\"eventName\": \"MODIFY\"', '\"eventName\": \"{}\"'.format("REMOVE"))
-    records = deserialize_records(delete_bucket_event["Records"])
-    process_dynamodb_record(records[0], generated_report)
-
-    # Should not do anything -- since not present in the list:
-    assert not generated_report["all_buckets"]
-
-    # If we receive a removal event that is NOT from a TTL, that should remove the bucket.
-    delete_bucket_event["Records"][0]["eventName"] = "REMOVE"
-    records = deserialize_records(delete_bucket_event["Records"])
-    process_dynamodb_record(records[0], generated_report)
-    assert not generated_report["buckets"].get("testbucketNEWBUCKET")
-
-
-def test_process_dynamodb_record_ttl(ttl_event, generated_report):
-    generated_report["all_buckets"] = []
-    records = deserialize_records(ttl_event["Records"])
-    process_dynamodb_record(records[0], generated_report)
-
-    # Should not do anything -- since not present in the list:
-    assert not generated_report["all_buckets"]
-
-    generated_report["buckets"]["testbucketNEWBUCKET"] = {"some configuration": "this should be deleted"}
-    process_dynamodb_record(records[0], generated_report)
+    process_durable_event(records[0], generated_report)
     assert not generated_report["buckets"].get("testbucketNEWBUCKET")
 
 
 def test_bucket_schema_for_events(historical_table, generated_report, bucket_event):
     generated_report["all_buckets"] = []
     records = deserialize_records(bucket_event["Records"])
-    process_dynamodb_record(records[0], generated_report)
+    process_durable_event(records[0], generated_report)
 
     full_report = S3ReportSchema(strict=True).dump(generated_report).data
 
@@ -221,7 +203,7 @@ def test_lite_bucket_schema_for_events(historical_table, bucket_event):
 
     generated_report["all_buckets"] = []
     records = deserialize_records(bucket_event["Records"])
-    process_dynamodb_record(records[0], generated_report)
+    process_durable_event(records[0], generated_report)
 
     lite_report = S3ReportSchema(strict=True).dump(generated_report).data
 
